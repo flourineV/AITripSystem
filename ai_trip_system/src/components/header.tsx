@@ -3,6 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
+import { AiOutlineHeart, AiOutlineUser } from "react-icons/ai";
+import { FiMap, FiUsers, FiCalendar, FiMenu } from "react-icons/fi";
+import { FaBell, FaUserCircle, FaSearch, FaCog } from "react-icons/fa";
+import { MdOutlineLogin } from "react-icons/md";
 
 const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -32,143 +36,75 @@ const Header = () => {
   }, [isDropdownOpen]);
 
   return (
-    <div className="w-full">
-      <header className="bg-gradient-to-r from-teal-500 to-blue-500 flex justify-between items-center h-[35px] relative">
-        <div className="flex w-1/2 justify-between items-center p-0 gap-2">
-          <div className="w-[30px] h-[30px] p-0">
-            <Link href="/">
-              <Image
-                src="/logo.png"
-                width={30}
-                height={30}
-                alt="logo"
-                className="w-[30px] h-[30px]"
-              />
-            </Link>
-          </div>
-          <div className="w-[calc(100%-30px)]">
-            <Link href="/">
-              <b className="text-black text-2xl">TravelGO!</b>
-            </Link>
-          </div>
+    <header className="w-full bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-800 shadow-lg px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+      {/* Logo */}
+      <div className="flex items-center gap-2">
+        <Link href="/">
+          <Image src="/logo.png" width={40} height={40} alt="logo" className="rounded-full shadow border-2 border-white bg-white" />
+        </Link>
+        <Link href="/">
+          <span className="text-white font-bold text-2xl tracking-wide select-none drop-shadow">TravelGO</span>
+        </Link>
+      </div>
+      {/* Search bar */}
+      <div className="flex-1 flex justify-center px-4">
+        <div className="relative w-full max-w-md">
+          <input
+            type="text"
+            placeholder="Tìm kiếm điểm đến, tour, ..."
+            className="w-full py-2 pl-10 pr-4 rounded-full bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
-
-        <div className="flex w-1/2 justify-end items-center p-[10px] md:gap-[30px]">
-          <div className="hidden md:flex items-center p-0">
-            <Link
-              href="/favorites"
-              className="flex items-center no-underline text-black hover:opacity-70 transition-opacity duration-300"
-              aria-label="Yêu thích"
-            >
-              <Image src="/heart.svg" width={30} height={30} alt="favorite" />
-              <span className="ml-2 text-sm text-black">
-                <b>Yêu thích</b>
-              </span>
-            </Link>
-          </div>
-
-          <div className="hidden md:flex items-center p-0">
-            <Link
-              href="/profile"
-              className="flex items-center no-underline text-black hover:opacity-70 transition-opacity duration-300"
-              aria-label="Profile"
-            >
-              <Image src="/profile.svg" width={30} height={30} alt="profile" />
-              <span className="ml-2 text-sm text-black">
-                <b>Profile</b>
-              </span>
-            </Link>
-          </div>
-
-          <div className="relative inline-block" ref={dropdownRef}>
-            <div
-              className="flex items-center text-black hover:opacity-70 transition-opacity duration-300"
-              onClick={toggleDropdown}
-              role="button"
-              aria-expanded={isDropdownOpen}
-              aria-label="Menu"
-            >
-              <Image src="/hamburger.svg" width={30} height={30} alt="menu" />
-              <span className="ml-2 text-sm text-black hidden md:block">
-                <b>Menu</b>
-              </span>
-            </div>
-            <div
-              className={`absolute top-[35px] right-0 bg-white min-w-[160px] shadow-lg rounded-md z-10 opacity-0 transition-all duration-300 transform -translate-y-2 md:min-w-[120px] md:left-1/2 md:-translate-x-1/2 ${
-                isDropdownOpen
-                  ? "block opacity-100 translate-y-0"
-                  : "hidden"
-              }`}
-            >
-              <div className="flex flex-col md:hidden">
-                <Link
-                  href="/favorites"
-                  className="flex items-center text-black p-3 no-underline hover:bg-gray-200"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  <Image src="/heart.svg" width={24} height={24} alt="favorite" className="mr-2" />
-                  Yêu thích
-                </Link>
-                <Link
-                  href="/map"
-                  className="flex items-center text-black p-3 no-underline hover:bg-gray-200"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  Bản đồ
-                </Link>
-                <Link
-                  href="/friend"
-                  className="flex items-center text-black p-3 no-underline hover:bg-gray-200"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  Bạn bè
-                </Link>
-                <Link
-                  href="/booking"
-                  className="flex items-center text-black p-3 no-underline hover:bg-gray-200"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  Đặt chỗ
-                </Link>
-                <Link
-                  href="/profile"
-                  className="flex items-center text-black p-3 no-underline hover:bg-gray-200"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  <Image src="/profile.svg" width={24} height={24} alt="profile" className="mr-2" />
-                  Trang cá nhân
-                </Link>
-              </div>
-
-              {/* Menu items cho desktop */}
-              <div className="hidden md:flex flex-col">
-                <Link
-                  href="/map"
-                  className="flex items-center text-black p-3 no-underline hover:bg-gray-200"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  Bản đồ
-                </Link>
-                <Link
-                  href="/friend"
-                  className="flex items-center text-black p-3 no-underline hover:bg-gray-200"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  Bạn bè
-                </Link>
-                <Link
-                  href="/booking"
-                  className="flex items-center text-black p-3 no-underline hover:bg-gray-200"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  Đặt chỗ
-                </Link>
-              </div>
-            </div>
-          </div>
+      </div>
+      {/* Actions desktop */}
+      <div className="hidden md:flex items-center gap-2">
+        <button className="p-2 rounded-full hover:bg-indigo-700 transition">
+          <FaBell className="text-white text-lg" />
+        </button>
+        <button className="p-2 rounded-full hover:bg-indigo-700 transition">
+          <FaCog className="text-white text-lg" />
+        </button>
+        <Link href="/profile" className="p-2 rounded-full hover:bg-indigo-700 transition">
+          <FaUserCircle className="text-white text-2xl" />
+        </Link>
+        <Link href="/login" className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-violet-500 text-white font-bold px-4 py-2 rounded-full shadow hover:scale-105 transition">
+          <MdOutlineLogin className="text-xl" />
+          Đăng nhập
+        </Link>
+      </div>
+      {/* Mobile menu */}
+      <div className="md:hidden relative" ref={dropdownRef}>
+        <button
+          className="flex items-center justify-center w-12 h-12 rounded-full bg-white/30 hover:bg-white/50 transition shadow-lg"
+          onClick={toggleDropdown}
+          aria-label="Menu"
+          aria-expanded={isDropdownOpen}
+        >
+          <FiMenu size={32} />
+        </button>
+        <div
+          className={`absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl py-2 transition-all duration-300 z-50 ${isDropdownOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}
+        >
+          <Link href="/profile" className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition" onClick={() => setIsDropdownOpen(false)}>
+            <FaUserCircle size={22} />
+            Trang cá nhân
+          </Link>
+          <Link href="/login" className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition" onClick={() => setIsDropdownOpen(false)}>
+            <MdOutlineLogin size={22} />
+            Đăng nhập
+          </Link>
+          <button className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition w-full">
+            <FaBell size={22} />
+            Thông báo
+          </button>
+          <button className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition w-full">
+            <FaCog size={22} />
+            Cài đặt
+          </button>
         </div>
-      </header>
-    </div>
+      </div>
+    </header>
   );
 };
 

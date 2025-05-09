@@ -48,6 +48,8 @@ const DestinationCards = () => {
               <Image
                 src={dest.image}
                 alt={dest.name}
+                width={320}
+                height={180}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 onError={(e) => {
                   // Fallback image if the main image fails to load

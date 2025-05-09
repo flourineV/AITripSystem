@@ -1,11 +1,14 @@
 'use client'
 import { FaChevronLeft, FaPen, FaXmark, FaCamera, FaUserCheck } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, ChangeEvent, useEffect } from "react";
 import Image from "next/image";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState({
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editedUser, setEditedUser] = useState({
     IDUser: "U00001",
     Name: "Nguyễn Văn A",
     Username: "nguyenvana",
@@ -19,8 +22,6 @@ export default function ProfilePage() {
     Language: 1,
     Aboutme: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sedeuismod, nunc a dapibus volutpat, quam velit euismod est, bibendum augue tortor sed nulla.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sedeuismod, nunc a dapibus volutpat, quam velit euismod est, abibendum augue tortor sed nulla.Lorem ipsum dolor sit amet, consectetur adipiscing elit.Sedeuismod, nunc a dapibus volutpat, quam velit euismod est, abibendum augue tortor sed nulla."
   });
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editedUser, setEditedUser] = useState(user);
   const [step, setStep] = useState(1);
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,10 +42,47 @@ export default function ProfilePage() {
     router.push("/");
   };
 
-  const handleSaveBtn = () => {
-    setUser(editedUser);
-    setStep(1);
-    setShowEditModal(false);
+  const handleSaveBtn = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://aitripsystem-api.onrender.com/api/v1/users/${user.IdUser}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: editedUser.Name,
+          email: editedUser.Email,
+          phonenumber: editedUser.PhoneNumber,
+          gender: editedUser.Gender,
+          description: editedUser.Aboutme
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || 'Update failed');
+      }
+
+      const updated = await res.json();
+      setUser({
+        ...user,
+        Name: updated.name ?? user.Name,
+        Email: updated.email ?? user.Email,
+        PhoneNumber: updated.phonenumber ?? user.PhoneNumber,
+        Gender: updated.gender ?? user.Gender,
+        Aboutme: updated.description ?? user.Aboutme
+      });
+      setShowEditModal(false);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Cập nhật thất bại!');
+    }
   };
 
   const handleAvatarUpload = () => {
@@ -82,6 +120,45 @@ export default function ProfilePage() {
 
   const handleFriendRequestSent = () => {
     setIsFriendRequestSent(true);
+  }
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const username = typeof window !== 'undefined' ? localStorage.getItem('username') : null;
+    if (!token || !username) {
+      router.push("/login");
+      return;
+    }
+    fetch(`https://aitripsystem-api.onrender.com/api/v1/users/username?lookup=${username}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Unauthorized');
+        return res.json();
+      })
+      .then(data => {
+        setUser({
+          ...data,
+          Avatar: data.avatar ? `data:image/png;base64,${data.avatar}` : "/logo.png",
+          Name: data.name ?? "Chưa cập nhật",
+          Email: data.email ?? "Chưa cập nhật",
+          Friends: data.friends ?? 0,
+          Gender: data.gender ?? 3,
+          PhoneNumber: data.phonenumber ?? "Chưa cập nhật",
+          Aboutme: data.description ?? "Chưa cập nhật",
+          IdUser: data.iduser ?? "",
+        });
+        setLoading(false);
+      })
+      .catch(() => {
+        router.push("/login");
+      });
+  }, [router]);
+
+  if (loading || !user) {
+    return <div className="flex justify-center items-center h-screen">Đang tải thông tin người dùng...</div>;
   }
 
   return (
@@ -156,166 +233,38 @@ export default function ProfilePage() {
       {
         showEditModal && (
           <div className="flex fixed inset-0 z-50 items-center justify-center bg-black/50" draggable="false">
-            <div className="flex flex-col bg-white dark:bg-black rounded-lg shadow-lg w-full h-108 md:h-100 max-w-2xl mx-4">
-
-              {/* {Avatar update modal} */}
-              {
-                step === 1 &&
-                <>
-                  <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-600">
-                    <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">Choose your profile picture</h3>
-                    <button
-                      onClick={() => setShowEditModal(false)}
-                      className="text-xl p-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 dark:text-white transition-colors duration-200 cursor-pointer">
-                      <FaXmark />
-                    </button>
-                  </div>
-
-                  <div className="relative p-4 text-gray-700 dark:text-white mx-auto">
-                    <Image
-                      src={editedUser.Avatar}
-                      width={200}
-                      height={200}
-                      alt="avatar"
-                      className="border-2 border-black dark:border-gray-400 rounded-full object-cover"
-                      style={{ width: '200px', height: '200px' }}
-                    />
-
-                    <button
-                      onClick={handleAvatarUpload}
-                      className="absolute bottom-0 right-0 text-xl m-4 p-3 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white transition-colors duration-200 cursor-pointer">
-                      <FaCamera />
-                    </button>
-                  </div>
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-
-                  <div className="flex p-4 mt-auto">
-                    <button
-                      onClick={() => setStep(prev => prev + 1)}
-                      className="w-full h-12 text-md font-bold rounded-4xl cursor-pointer text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 border-2 border-black dark:border-gray-600 transition-colors duration-200"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </>
-              }
-
-              {/* {Gender update modal} */}
-              {
-                step === 2 &&
-                <>
-                  <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-600">
-                    <button
-                      onClick={() => setStep(prev => prev - 1)}
-                      className="p-2 mr-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 dark:text-white transition-colors duration-200 cursor-pointer">
-                      <FaChevronLeft />
-                    </button>
-                    <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">What's your gender?</h3>
-                    <button
-                      onClick={() => setShowEditModal(false)}
-                      className="text-xl p-2 ml-auto rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 dark:text-white transition-colors duration-200 cursor-pointer">
-                      <FaXmark />
-                    </button>
-                  </div>
-
-                  <div className="p-4 text-gray-700 dark:text-white">
-                    <select
-                      name="Gender"
-                      value={editedUser.Gender}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-3 rounded-lg border-2 text-md text-black bg-white focus:ring-blue-500 focus:border-blue-500 dark:bg-black dark:border-gray-600 dark:text-white"
-                    >
-                      {genderOptions.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex p-4 mt-auto">
-                    <button
-                      onClick={() => setStep(prev => prev + 1)}
-                      className="w-full h-12 text-md font-bold rounded-4xl cursor-pointer text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 border-2 border-black dark:border-gray-600 transition-colors duration-200"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </>
-              }
-
-              {/* {About me update modal} */}
-              {
-                step === 3 &&
-                <>
-                  <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-600">
-                    <button
-                      onClick={() => setStep(prev => prev - 1)}
-                      className="p-2 mr-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 dark:text-white transition-colors duration-200 cursor-pointer">
-                      <FaChevronLeft />
-                    </button>
-                    <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">About you</h3>
-                    <button
-                      onClick={() => { setShowEditModal(false); setStep(1) }}
-                      className="text-xl p-2 ml-auto rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 dark:text-white transition-colors duration-200 cursor-pointer">
-                      <FaXmark />
-                    </button>
-                  </div>
-
-                  <div className="p-4 text-gray-700 dark:text-white">
-                    <textarea
-                      name="Aboutme"
-                      rows={6}
-                      placeholder="Write your bio here..."
-                      value={editedUser.Aboutme}
-                      onChange={handleInputChange}
-                      className="resize-none w-full p-2.5 text-sm rounded-lg border text-gray-900 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div className="flex p-4 mt-auto">
-                    <button
-                      onClick={() => setStep(prev => prev + 1)}
-                      className="w-full h-12 text-md font-bold rounded-4xl cursor-pointer text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 border-2 border-black dark:border-gray-600 transition-colors duration-200"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </>
-              }
-
-              {/* {Save update modal} */}
-              {
-                step === 4 &&
-                <>
-                  <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-600">
-                    <button
-                      onClick={() => setStep(prev => prev - 1)}
-                      className="p-2 mr-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 dark:text-white transition-colors duration-200 cursor-pointer">
-                      <FaChevronLeft />
-                    </button>
-                    <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">Click to save updates</h3>
-                    <button
-                      onClick={() => { setShowEditModal(false); setStep(1) }}
-                      className="text-xl p-2 ml-auto rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 dark:text-white transition-colors duration-200 cursor-pointer">
-                      <FaXmark />
-                    </button>
-                  </div>
-
-                  <div className="flex p-4 m-auto">
-                    <button
-                      onClick={handleSaveBtn}
-                      className="w-72 md:w-84 h-12 text-md font-bold rounded-4xl cursor-pointer text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 border-2 border-black dark:border-gray-600 transition-colors duration-200">
-                      Save
-                    </button>
-                  </div>
-                </>
-              }
+            <div className="flex flex-col bg-white rounded-lg shadow-lg w-full max-w-md mx-4 p-6 text-black">
+              <h3 className="text-2xl font-semibold mb-4">Chỉnh sửa thông tin cá nhân</h3>
+              <form className="flex flex-col gap-4" onSubmit={e => { e.preventDefault(); handleSaveBtn(); }}>
+                <label className="flex flex-col gap-1">
+                  <span className="font-semibold">Tên</span>
+                  <input name="Name" value={editedUser.Name} onChange={handleInputChange} className="border border-gray-300 rounded p-2 text-black" />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="font-semibold">Email</span>
+                  <input name="Email" value={editedUser.Email} onChange={handleInputChange} className="border border-gray-300 rounded p-2 text-black" />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="font-semibold">Số điện thoại</span>
+                  <input name="PhoneNumber" value={editedUser.PhoneNumber} onChange={handleInputChange} className="border border-gray-300 rounded p-2 text-black" />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="font-semibold">Giới tính</span>
+                  <select name="Gender" value={editedUser.Gender} onChange={handleInputChange} className="border border-gray-300 rounded p-2 text-black">
+                    <option value={1}>Nam</option>
+                    <option value={2}>Nữ</option>
+                    <option value={3}>Khác</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="font-semibold">Giới thiệu</span>
+                  <textarea name="Aboutme" value={editedUser.Aboutme} onChange={handleInputChange} className="border border-gray-300 rounded p-2 text-black" rows={3} />
+                </label>
+                <div className="flex gap-2 mt-4">
+                  <button type="submit" className="flex-1 bg-blue-600 text-white rounded p-2 font-bold hover:bg-blue-700">Lưu</button>
+                  <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 bg-gray-200 rounded p-2 font-bold hover:bg-gray-300 text-black">Hủy</button>
+                </div>
+              </form>
             </div>
           </div>
         )
